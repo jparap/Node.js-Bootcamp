@@ -4,7 +4,8 @@ This is a Proxy Server for Node.js submitted as the pre-work requirement for Cod
 
 To run the Proxy Server:
 
-Change direcory to proxy-server
+Change the current direcory to proxy-server
+
 $ cd proxy-server
 
 $ babel-node index.js
