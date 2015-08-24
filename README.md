@@ -4,7 +4,7 @@ This is a Proxy Server for Node.js submitted as the pre-work requirement for Cod
 
 # To run the Proxy Server:
 
-Change the current direcory to proxy-server
+Change the current directory to proxy-server
 
 $ cd proxy-server
 
