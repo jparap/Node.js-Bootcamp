@@ -1,6 +1,6 @@
 # Node.js-Bootcamp
 
-This is a Proxy Server for Node.js submitted as the pre-work requirement for CodePath.
+This is a Proxy Server using Node.js,  submitted as the pre-work requirement for CodePath.
 
 # To run the Proxy Server:
 
