@@ -13,9 +13,15 @@ Time spent: `7`
 - [x] Client can make PUT requests to create new directories and files with content
 - [x] Client can make POST requests to update the contents of a file
 - [x] Client can make DELETE requests to delete files and folders
+<<<<<<< HEAD
 - [x] Server will serve from `--dir` or cwd as root
 - [ ] Server will sync `HTTP` modifications over TCP to the Client
 - [x] Server will sync watched file modifications (e.g., `fs.watch`) over TCP to the Client
+=======
+- [ ] Server will serve from `--dir` or cwd as root
+- [ ] Server will sync `HTTP` modifications over TCP to the Client
+- [ ] Server will sync watched file modifications (e.g., `fs.watch`) over TCP to the Client
+>>>>>>> 27e0fa0eff7abf2e112ab3900111e98f70eb9a15
 
 ### Optional
 
