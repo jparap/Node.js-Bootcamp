@@ -30,7 +30,8 @@ Time spent: `7`
 
 
 ### Walkthrough
-  Note: To start tcp server and client, need to execute the follwoing commands
+  Note: To start tcp server and client, need to execute the following commands:
+  
     nodemon --exec babel-node -- --stage1 --optional strict -- server.js
     nodemon --exec babel-node -- --stage1 --optional strict -- client.js 
 
