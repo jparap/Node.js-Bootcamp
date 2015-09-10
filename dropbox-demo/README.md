@@ -5,7 +5,7 @@ Time spent: `7`
 
 #### Required
 
-- [ ] Walkthrough Gif embedded in README
+- [x] Walkthrough Gif embedded in README
 - [x] README `Time spent:` includes the number of hours spent on the assignment
 - [x] Client can make GET requests to get file or directory contents
 - [x] Client can download a directory
@@ -14,7 +14,7 @@ Time spent: `7`
 - [x] Client can make POST requests to update the contents of a file
 - [x] Client can make DELETE requests to delete files and folders
 - [x] Server will serve from `--dir` or cwd as root
-- [ ] Server will sync `HTTP` modifications over TCP to the Client
+- [x] Server will sync `HTTP` modifications over TCP to the Client
 - [x] Server will sync watched file modifications (e.g., `fs.watch`) over TCP to the Client
 
 ### Optional
@@ -30,11 +30,8 @@ Time spent: `7`
 
 
 ### Walkthrough
-  Note: To start tcp server and client, need to execute the following commands:
-  
-    nodemon --exec babel-node -- --stage1 --optional strict -- server.js
-    nodemon --exec babel-node -- --stage1 --optional strict -- client.js 
-
-
+  Note: To start server and client, need to execute the following commands:
+    To start the server: npm start
+    To start the cleint: npm run client
 
 
