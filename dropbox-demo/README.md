@@ -32,7 +32,7 @@ Time spent: `7`
 ### Walkthrough
   Note: To start server and client, need to execute the following commands:
   
-  ![Walkthrough](dropbox-demo.gif)
+   Walkthrough:  https://github.com/jparap/Node.js-Bootcamp/issues/3
   
     To start the server:	npm start
     
