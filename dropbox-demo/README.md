@@ -31,7 +31,13 @@ Time spent: `7`
 
 ### Walkthrough
   Note: To start server and client, need to execute the following commands:
-    To start the server: npm start
-    To start the cleint: npm run client
-
-
+  
+  ![Walkthrough](dropbox-demo.gif)
+  
+    To start the server:	npm start
+    
+    To start the cleint:	npm run client
+    
+    To add / put a file:	curl -v http://127.0.0.1:8000/tesfile1.txt -X PUT -d "tesfile test 1"
+    
+    To get files:	curl -v http://127.0.0.1:8000/ -X GET
