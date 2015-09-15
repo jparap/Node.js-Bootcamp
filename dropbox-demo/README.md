@@ -1,5 +1,5 @@
 
-Time spent: `7`
+Time spent: 15
 
 ### Features
 
@@ -8,7 +8,7 @@ Time spent: `7`
 - [x] Walkthrough Gif embedded in README
 - [x] README `Time spent:` includes the number of hours spent on the assignment
 - [x] Client can make GET requests to get file or directory contents
-- [x] Client can download a directory
+- [x] Client can download a directory as an archive
 - [x] Client can make HEAD request to get just the GET headers 
 - [x] Client can make PUT requests to create new directories and files with content
 - [x] Client can make POST requests to update the contents of a file
@@ -19,7 +19,7 @@ Time spent: `7`
 
 ### Optional
 
-- [ ] Client supports multiple connected clients
+- [x] Client supports multiple connected clients
 - [ ] Client does not need to make additional `GET` request on `"write"` update
 - [ ] Client and User will be redirected from HTTP to HTTPS
 - [ ] Client will sync back to Server over TCP

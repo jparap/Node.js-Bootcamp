@@ -11,6 +11,8 @@ let mkdirp = require('mkdirp')
 //require('longjohn')
 let net = require('net')
 let JsonSocket = require('json-socket')
+let archiver = require('archiver')
+let chokidar = require('chokidar');
 
 require('songbird')
 
@@ -32,13 +34,50 @@ app.listen(PORT,() => console.log(`HTTP Server Listening @ localhost:${PORT}`))
 app.head('*', setFileMeta, sendHeaders,(req, res) => res.end())
 
 // GET
-app.get('*', setFileMeta, sendHeaders,(req, res) => {
+/* app.get('*', setFileMeta, sendHeaders,(req, res) => {
+  if (!req.stat) return res.send(400, 'Invalid Path')
+
   if (res.body) {
     res.json(res.body)
     return
   }
   fs.createReadStream(req.filePath).pipe(res)
 })
+*/
+
+app.get('*', setFileMeta, sendHeaders, (req, res) => {
+    console.log(req.headers.accept)
+    if (!req.stat) return res.send(400, 'Invalid Path')
+
+    if (res.body) {
+
+        if (req.accepts('application/x-gtar')) {
+            let archive = archiver('tar')
+            archive.pipe(res);
+            archive.bulk([
+                { expand: true, cwd: req.filePath, src: ['**']}
+            ])
+            archive.finalize()
+
+            archive.on('close', function() {
+                res.setHeader("Content-Length", archive.pointer())
+            });
+
+            res.setHeader("Content-Type", 'application/x-gtar')
+
+            return
+        } 
+
+        if (req.accepts(['*/*', 'application/json'])) {
+            res.setHeader("Content-Length", res.body.length)
+            res.json(res.body)
+            return
+        }
+    }
+
+    fs.createReadStream(req.filePath).pipe(res)
+})
+
 
 // DELETE
 app.delete('*', setFileMeta,(req, res, next) => {
@@ -56,12 +95,12 @@ app.delete('*', setFileMeta,(req, res, next) => {
 app.put('*', setFileMeta, setDirDetails,(req, res, next) => {
   async() => {
 	console.log(req.dirPath)
-	req.action = 'create'
+	req.action = 'add'
 	console.log(req.isDir)
     if (req.stat) return res.send(405, 'File Exists')
     await mkdirp.promise(req.dirPath)
     if (!req.isDir) req.pipe(fs.createWriteStream(req.filePath))
-	sendtoClient(req,res)
+	//sendtoClient(req,res)
     res.status(200).send('File  added Successfully')
     res.end()
   } ().catch(next)
@@ -138,3 +177,55 @@ function sendtoClient(req, res){
 		clientSocket.sendMessage({action:req.action,path:req.url,type:req.isDir?'dir':'file'})
 	}
 }
+
+function sendChangetoClient(action, path, type){
+
+  console.log('Number of clients connected:' + tcpSockets.length)
+
+  for (let clientSocket of tcpSockets) {
+    clientSocket.sendMessage({action:action,path:path,type:type})
+  }
+}
+
+function sendChangetoClient(action, path, type){
+
+  console.log('Number of clients connected:' + tcpSockets.length)
+
+  for (let clientSocket of tcpSockets) {
+    clientSocket.sendMessage({action:action,path:path,type:type})
+  }
+}
+
+
+//TCP server to watch and notify the changes.
+let watcher = chokidar.watch(ROOT_DIR, {
+  ignored: /[\/\\]\./,
+  persistent: true
+})
+watcher
+  .on('add', function(path) { 
+      console.log('File', path, ' added') 
+      sendChangetoClient('add', path.replace(ROOT_DIR, ""), 'file') 
+    })
+  .on('change', function(path) 
+    { console.log('File', path, ' changed') 
+      sendChangetoClient('change', path.replace(ROOT_DIR, ""), 'file')  
+    })
+  .on('unlink', function(path) 
+    { console.log('File', path, ' removed') 
+      sendChangetoClient('unlink', path.replace(ROOT_DIR, ""), 'file' )  
+    })
+  .on('addDir', function(path) 
+    { console.log('Directory', path, ' added') 
+      sendChangetoClient('add', path.replace(ROOT_DIR, ""), 'dir')  
+    })
+  .on('unlinkDir', function(path) 
+    { console.log('Directory', path, ' removed') 
+      sendChangetoClient('unlink', path.replace(ROOT_DIR, ""), 'dir' ) 
+    })
+  .on('ready', function() 
+    { console.log('Initial scan complete. Ready for changes.') 
+  })
+
+
+
