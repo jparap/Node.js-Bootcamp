@@ -1,35 +1,33 @@
 let express = require('express')
-let morgan = require('morgan')
-let bodyParser = require('body-parser')
-let cookieParser = require('cookie-parser')
-let session = require('express-session')
 let passport = require('passport')
-let flash = require('connect-flash')
+let cookieParser = require('cookie-parser')
+let bodyParser = require('body-parser')
+let session = require('express-session')
 let mongoose = require('mongoose')
+let LocalStrategy = require('passport-local').Strategy
+let nodeifyit = require('nodeifyit')
+let morgan = require('morgan')
+let flash = require('connect-flash')
+
 let passportMiddleware = require('./middleware/passport')
-let routes = require('./routes')
+let routes =  require('./routes.js')
+
+let User = require('./models/User.js')
+
 require('songbird')
 
-// const NODE_ENV = process.env.NODE_ENV
+let app = new express()
+app.passport = passport
 const PORT = process.env.PORT || 8000
 
-let app = express()
-app.passport = passport
-
-// log every request to the console
 app.use(morgan('dev'))
+app.use(cookieParser('ilovethenodejs'))    
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.set('view engine', 'ejs');
 
-// Read cookies, required for sessions
-app.use(cookieParser('ilovethenodejs'))
+mongoose.connect('mongodb://127.0.0.1:27017/blogger')
 
-// Get POST/PUT body information (e.g., from html forms)
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-
-// Use ejs for templating
-app.set('view engine', 'ejs')
-
-// In-memory session support, required by passport.session()
 app.use(session({
   secret: 'ilovethenodejs',
   resave: true,
@@ -42,12 +40,15 @@ app.use(passport.initialize())
 // Enable passport persistent sessions
 app.use(passport.session())
 app.use(flash())
+app.listen(PORT, () => console.log(`LISTENING @ http://127.0.0.1:${PORT}`))
 
-// Configure passport strategies & routes
+let user = {
+    email: 'test@test.com',
+   password: 'asdf'
+}
+
 passportMiddleware(app)
 routes(app)
 
-// connect to database
-mongoose.connect('mongodb://127.0.0.1:27017/blogger-demo')
-// start server
-app.listen(PORT, ()=> console.log(`Listening @ http://127.0.0.1:${PORT}`))
+
+

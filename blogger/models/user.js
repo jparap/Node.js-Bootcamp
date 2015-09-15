@@ -1,67 +1,39 @@
 let mongoose = require('mongoose')
+let nodeify = require('bluebird-nodeify')
 //let bcrypt = require('bcrypt')
-//let crypto = require('crypto')
-//let SALT = 'CodePathHeartNodeJS'
-//let nodeify  = require('bluebird-nodeify')
 
-require('songbird')
 
-let userSchema = mongoose.Schema({
-  username: {
-  type: String,
-  required: true
-  },
-  email: {
-  type: String,
-  required: true
-  },
-  password: {
-  type: String,
-  required: true
-  },
-    blogtitle: String,
-	blogdescription: String
+let UserSchema = mongoose.Schema({
+	username: {	type:String, required: true },
+    email: {type:String, required: true	},
+    password: { type:String, required: true	},
+    blogTitle: {type:String, required: false } ,
+    blogDescription: String	
 })
 
-/*
-userSchema.methods.generateHash = async function(password) {
-//  return await bcrypt.promise.hash(password, 8)
-  return await crypto.promise.pbkdf2(password, SALT, 4096, 512, 'sha256')
+
+/*UserSchema.methods.generateHash = async function(password) {
+	return await bcrypt.promise.hash(password, 8)
 }
 
-userSchema.methods.validatePassword = async function(password) {
-//  return await bcrypt.promise.compare(password, this.password)
-let passwordHash = await crypto.promise.pbkdf2(password, SALT, 4096, 512, 'sha256')
-   if (passwordHash.toString('hex') !== this.password) {
-       return [false, {message: 'Invalid password'}]
-   } else { 
-    return true
-    }
+UserSchema.methods.validatePassword = async function (password) {
+	return await bcrypt.promise.compare(password, this.password)
 }
 
 
-userSchema.pre('save', function(callback)=>{
- nodify(async() {
- if (!this.isModified('password')) return callback()
- this.password = await this.generateHash(this.password)
- }(), callback)
- })
+UserSchema.pre('save', function(callback){
+	nodeify(async() => {
+		if(this.isModified('password')) {
+			this.password = await this.generateHash(this.password)
+		}
+		console.log('Saving data')
+		
+	}(), callback)																
+})
+*/
 
-
-
-userSchema.pre('save', function(callback)=>{
- nodify(async() {
- if (!this.isModified('password')) return callback()
- //this.password = await this.generateHash(this.password)
- }(), callback)
- })
- */
-
-userSchema.path('password').validate( (pwd) => {
-
-	return pwd.length >= 4 &&  /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[0-9]/.test(pwd)
+UserSchema.path('password').validate((pw) => {
+	return pw.length >= 4 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /[0-9]/.test(pw)
 })
 
-module.exports = mongoose.model('User', userSchema)
-
-      
+module.exports = mongoose.model('User', UserSchema)

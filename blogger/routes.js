@@ -1,161 +1,208 @@
 let fs = require('fs')
-let dataUri = require('datauri')
+let DataUri = require('datauri')
 let multiparty = require('multiparty')
 let then = require('express-then')
+
 let isLoggedIn = require('./middleware/isLoggedIn')
+let User = require('./models/User')
 let Post = require('./models/post')
 
 
-
 module.exports = (app) => {
-  let passport = app.passport
 
-  app.get('/', (req, res) => {
-    res.render('index.ejs')
-  })
-  
-  app.get('/login', (req, res) => {
-    res.render('login.ejs', {message: req.flash('error')})
-  })
-  
-  app.post('/login', passport.authenticate('local-login', {
-    successRedirect: '/profile',
-    failureRedirect: '/login',
-    failureFlash: true
-  }))
+    let passport = app.passport
 
-  app.get('/signup', (req, res) => {
-    res.render('signup.ejs', {message: req.flash('error')})
-  })
-  
-  // process the signup form
-  app.post('/signup', passport.authenticate('local-signup', {
-    successRedirect: '/profile',
-    failureRedirect: '/signup',
-    failureFlash: true
-  }))
+    app.get('/', function(req, res) {res.render('index.ejs'); })
 
-  app.get('/profile', isLoggedIn, (req, res) => {
-    res.render('profile.ejs', {
-      user: req.user,
-      message: req.flash('error')
-    })
-  })
-
-  app.get('/logout', (req, res) => {
-    req.logout()
-    res.redirect('/')
-  })
-  
-  app.get('/post/:postId?', then(async (req, res) => {
-    let postId = req.params.postId
-  
-    if (!postId) {
-    res.render('post.ejs', {
-      post: {},
-      verb: 'Create'
-    })
-    return
-    }
-    
-    let post = await Post.promise.findById(postId)
-    if (!post) res.send(404, 'Not found')
-    
-    let dataUri = new DataUri
-    let image = dataUri.format('.'+post.image.contentType.split('/').pop(),
-    post.image.data)
-    
-    console.log(image)
-    res.render('post.ejs', {
-    post: post,
-    verb: 'Edit',
-    image: `data: ${post.image.contentType};base64,${image.base64}`
+    //login
  
+    app.get('/login', function(req, res) {
+        res.render('login.ejs', { message: req.flash('error')});
     })
+
+    app.post('/login', passport.authenticate('local', {
+        successRedirect: '/profile',
+        failureRedirect: '/login',
+        failureFlash: true
     }))
- 
-  app.post('/post/:postId?', isLoggedIn, then(async (req, res) => {
-    let postId = req.params.postId
-    console.log('post id is :'+postId)
-    if (!postId) {
-    let post = new Post()
-    console.log(req.body)
-    let [{title: [title], content: [content]},{image: [file]}] = await new multiparty.Form().promise.parse(req)
-    
-    post.email = req.user.email
-    post.title = title
-    post.content = content
-    console.log(file, title, content)
-    post.image.data = await fs.promise.readFile(file.path)  
-    post.image.contentType = file.headers['content-type']
-    console.log(file, title, content, post.image)
-    await post.save() 
-    console.log("req.user.blogtitle  "+req.user)
- //  res.redirect('/blog/' + encodeURI(req.user.blogtitle))
-    res.redirect('/blog/' + encodeURI(req.user.email))
-   //   res.redirect(`/blog/posts/${post.id}`)
-    return
-    }
-    
-    let post = await Post.promise.findById(postId)
-    if (!post) res.send(404, 'Not Found')
-    
-    post.title = title
-    post.content = content
-    await post.save()
-    console.log("Request Object here "+JSON.stringify(req.passport.user))
-    //res.redirect(`/blog/posts/${post.id}`)
-   // res.redirect('/blog/' + encodeURI(req.user.blogtitle))
-     res.redirect('/blog/' + encodeURI(req.user.email))
-    return  
+  
+   //signup
+
+    app.get('/signup', function(req, res) {
+        res.render('signup.ejs', {message: req.flash('error')});
+    })
+
+    app.post('/signup', passport.authenticate('local-signup', {
+        successRedirect: '/profile',
+        failureRedirect: '/signup',
+        failureFlash: true
     }))
 
- app.get('/blog/:email?', then(async (req, res) => {
-    let email = req.params.email
-  console.log("email - from blog "+ email)
-    if (!email) {
-    res.render('post.ejs', {
-      post: {},
-      verb: 'Create'
-    })
-    return
-    }
-    
-    let post = await Post.promise.find(email)
-     console.log("post - from blog "+ email)
-    if (!post) res.send(404, 'Not found')
-    
-    let dataUri = new DataUri
-    let image = dataUri.format('.'+post.image.contentType.split('/').pop(),
-    post.image.data)
-    
-    console.log(image)
-    res.render('post.ejs', {
-    post: post,
-    verb: 'Edit',
-    image: `data: ${post.image.contentType};base64,${image.base64}`
- 
-    })
+
+   //profile
+
+
+    app.get('/profile', isLoggedIn, then(async(req, res) => {
+
+        let posts
+        let userId = req.user._id
+
+        posts = await Post.promise.find({
+            userId
+        })
+
+        for (let i = 0; i < posts.length; i++) {
+            if (posts[i].image) {
+                let datauri = new DataUri
+                let image = datauri.format('.' + posts[i].image.contentType.split('/').pop(), posts[i].image.data)
+                posts[i].displayImage = `data:${posts[i].image.contentType};base64,${image.base64}`
+            }
+        }
+
+        res.render('profile.ejs', {
+            user: req.user,
+            posts: posts,
+            message: req.flash('error')
+        })
     }))
+
+
+   //post/:postId
+
+
+    app.get('/post/:postId?', then(async(req, res) => {
+        let postId = req.params.postId
+
+        if (!postId) {
+            res.render('post.ejs', {
+                post: {},
+                verb: 'Create'
+            })
+            return
+        }
+
+        let post = await Post.promise.findById(postId)
+        if (!post) res.send(404, 'Not Found')
+
+        let datauri = new DataUri
+        let image = datauri.format('.' + post.image.contentType.split('/').pop(), post.image.data)
+        res.render('post.ejs', {
+            post: post,
+            verb: 'Edit',
+            image: `data:${post.image.contentType};base64,${image.base64}`
+        })
+    }))
+
+    app.post('/post/:postId?', then(async(req, res) => {
+        let postId = req.params.postId
+        if (!postId) {
+            let post = new Post()
+
+            let [{
+                title: [title],
+                content: [content]
+            }, {
+                image: [file]
+            }] = await new multiparty.Form().promise.parse(req)
+            post.title = title
+            post.content = content
+            post.userId = req.user._id
+            post.image.data = await fs.promise.readFile(file.path)
+            post.image.contentType = file.headers['content-type']
+            await post.save()
+            res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+            return
+        }
+
+        // Edit Post
+
+        let post = await Post.promise.findById(postId)
+        if (!post) res.send(404, 'Not Found')
+
+        let [{
+            title: [title],
+            content: [content]
+        }, {
+            image: [file]
+        }] = await new multiparty.Form().promise.parse(req)
+        post.title = title
+        post.content = content
+        post.userId = req.user._id
+        post.image.data = await fs.promise.readFile(file.path)
+        post.image.contentType = file.headers['content-type']
+        await post.save()
+
+
+        res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+        return
+
+    }))
+
+    app.get('/deletePost/:postId', then(async(req, res) => {
+        let postId = req.params.postId
+        let post = await Post.promise.findByIdAndRemove(postId)
+        res.redirect('/profile')
+
+    }))
+
+
+   //blog
+
+
+    app.get('/blog/:blogId?', then(async(req, res) => {
+        let blogTitle = req.params.blogId
+            //all the posts by the user
+
+        let user = await User.promise.findOne({
+            'blogTitle': blogTitle
+        })
         
- /*   app.get('/blog/posts/:postId?', (req, res) => {
-    let blogTitle = req.params.blogtitle
-    let postId = req.params.postId
-    let post = await Post.promise.findById(postId)
-    //let post = new Post()
-   //let blogPosts = await Post.promise.find({email:req.user.email})
-      console.log("email  "+req.user.email)
-   //         console.log("blogposts  "+blogPosts)
-    res.render('blog.ejs', {
-      user: req.user,
-      blogPosts: post,
-    // blogPosts: await post.promise.find({email:req.user.email}),
-      message: req.flash('error')
-    })
-  })
-  */
-  
-  
+        let userId = user._id
+        let posts = await Post.promise.find({
+            'userId': userId
+        })
+        for (let i = 0; i < posts.length; i++) {
+            if (posts[i].image) {
+                let datauri = new DataUri
+                let image = datauri.format('.' + posts[i].image.contentType.split('/').pop(), posts[i].image.data)
+                posts[i].displayImage = `data:${posts[i].image.contentType};base64,${image.base64}`
+            }
+        }
+        res.render('blog.ejs', {
+            blogTitle: user.blogTitle,
+            posts: posts
+        })
+    }))
+
+     //comment
+
+    app.post('/addComment/:postId', isLoggedIn, then(async(req, res) => {
+        let postId = req.params.postId
+        let post = await Post.promise.findById(postId)
+        if (!post) res.send(404, 'Not Found')
+
+        let comment = req.body.comment
+
+        let newComment = {
+            "content": comment,
+            "username": req.user.username,
+            "date": Date()
+        }
+
+        post.comments.push(newComment)
+
+        await post.save()
+        res.redirect(req.get('referer'))
+
+        // res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+        return
+
+    }))
+
+     //Logout
+     
+    app.get('/logout', function(req, res) {
+        req.logout();
+        res.redirect('/');
+    });
 }
-
-
